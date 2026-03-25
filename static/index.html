@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Candidate Screening Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      max-width: 980px;
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      flex: 1;
+      min-width: 320px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+    }
+
+    input[type="file"],
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      padding: 10px;
+      width: 100%;
+    }
+
+    button {
+      padding: 10px 14px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    pre {
+      background: #0b1020;
+      color: #d7e1ff;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f6f6f6;
+    }
+  </style>
+</head>
+
+<body>
+  <h1> Candidate Screening Platform (Demo)</h1>
+  <div class="muted">
+    This uses the backend pipeline, where Resume/Job Description scoring uses keyword fallback unless you enable with
+    `API_KEY`.
+    Resume parsing downloads PDFs from the provided links.
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div><b>1. Create Run</b></div>
+    <button id="btnCreateRun">Create Pipeline Run</button>
+    <div style="margin-top: 8px;">
+      Run ID: <code id="runId">-</code>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div><b>2. Upload Candidates file (CSV/Excel)</b></div>
+      <div class="muted">Expected columns: Name, Email, College, Branch, CGPA, Best AI Project, Research Work, GitHub
+        Profile, Resume Link. Include Candidate ID if available.</div>
+      <input id="candidatesFile" type="file" accept=".csv, .xlsx, .xls" />
+      <button id="btnUploadCandidates" disabled>Upload Candidates</button>
+    </div>
+
+    <div class="card">
+      <div><b>3. Job Description</b></div>
+      <label for="jobDescription">Job Description</label>
+      <textarea id="jobDescription" placeholder="Paste job description here..."></textarea>
+      <button id="btnSetJob" disabled>Set Job Description</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div><b>4. Start Phase 4 </b></div>
+      <div class="muted">This runs: resume extraction, AI scoring, GitHub analysis, ranking + test-link generation.
+      </div>
+      <label>Resume weight</label><input id="wResume" type="number" step="0.01" value="0.5" />
+      <label>GitHub weight</label><input id="wGithub" type="number" step="0.01" value="0.3" />
+      <label>CGPA weight</label><input id="wCgpa" type="number" step="0.01" value="0.2" />
+      <label>Shortlist threshold (overall, 0-100)</label><input id="threshold" type="number" step="0.1" value="50" />
+      <label>Test link base</label><input id="testLinkBase" type="text"
+        value="https://your-app-domain.com/tests/take?token=" />
+      <button id="btnStart" disabled>Start Pipeline</button>
+    </div>
+
+    <div class="card">
+      <div><b>5. Pipeline Status + Leaderboard</b></div>
+      <button id="btnPoll">Poll Status</button>
+      <pre id="statusBox">-</pre>
+      <button id="btnLeaderboard" disabled>Get Leaderboard</button>
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div><b>6. Upload Test Results (Phase 5)</b></div>
+    <div class="muted">Expected: test_la, test_code and join keys (prefer Candidate ID).</div>
+    <input id="testsFile" type="file" accept=".csv, .xlsx, .xls" />
+    <label>Test threshold (0-100)</label><input id="testThreshold" type="number" step="0.1" value="60" />
+    <button id="btnUploadTests" disabled>Upload Tests</button>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div><b>7. Schedule Interviews (Phase 6 dry-run)</b></div>
+    <label>Start datetime (ISO, e.g. 2026-03-23T10:00:00Z)</label>
+    <input id="startDatetime" type="text" value="2026-03-23T10:00:00Z" />
+    <label>Slot minutes</label>
+    <input id="slotMinutes" type="number" step="1" value="30" />
+    <button id="btnSchedule" disabled>Schedule</button>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div><b>7b. Send Test Emails (Phase 4 real SMTP/SendGrid if configured)</b></div>
+    <label>Email subject</label>
+    <input id="emailSubject" type="text" value="Your Technical Test Link" />
+    <button id="btnSendEmails" disabled>Send Emails</button>
+    <div class="muted">Requires server SMTP_* or SENDGRID_* environment variables.</div>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div><b>8. Test Links (generated)</b></div>
+    <button id="btnTestLinks" disabled>Get Test Links</button>
+    <pre id="testLinksBox">-</pre>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
